@@ -1,4 +1,4 @@
--- This is data that gets seeds the department table
+-- Seed data for the department table
 INSERT INTO department (id, department_name)
 VALUES  
   (1, "IT"),
@@ -11,7 +11,7 @@ VALUES
   (8, "Sales"),
   (9, "Administration");
 
--- This is data that gets seeds the role table
+-- Seed data for the role table
 INSERT INTO role (id, title, salary, department_id)
 VALUES  
   (1, "Administrative Assistant", 40000.00, 9),
@@ -32,34 +32,34 @@ VALUES
   (16, "Sales Manager", 100000.00, 8),
   (17, "Billing Specialist", 50000.00, 6);
 
--- This is data that gets seeds the employee table
-INSERT INTO employee (first_name, last_name, role_id, department_id)
+-- Seed data for the employee table
+INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES  
-  ("John", "Doe", 4, 1),
-  ("Jane", "Smith", 3, 3),
-  ("Alice", "Johnson", 12, 5),
-  ("Snow", "White", 12, 5),
-  ("Reditharm", "Andles", 1, 9),
-  ("Chris", "Evans", 5, 1),
-  ("Samuel", "Lee", 7, 1),
-  ("Laura", "Brown", 6, 1),
-  ("Peter", "Parker", 10, 2),
-  ("Bruce", "Wayne", 11, 2),
-  ("Clark", "Kent", 8, 4),
-  ("Diana", "Prince", 9, 4),
-  ("Steve", "Rogers", 14, 7),
-  ("Natasha", "Romanoff", 13, 7),
-  ("Tony", "Stark", 16, 8),
-  ("Pepper", "Potts", 15, 8),
-  ("Wanda", "Maximoff", 3, 3),
-  ("Vision", "Vision", 5, 1),
-  ("Thor", "Odinson", 10, 2),
-  ("Bruce", "Banner", 12, 5),
-  ("Peter", "Quill", 6, 1),
-  ("Gamora", "Gamora", 7, 1),
-  ("Scott", "Lang", 17, 6),
-  ("Hope", "Van Dyne", 17, 6),
-  ("Stephen", "Strange", 8, 4),
-  ("Bucky", "Barnes", 9, 4),
-  ("T'Challa", "T'Challa", 2, 9);
+  ("John", "Doe", 4, NULL),       
+  ("Jane", "Smith", 3, NULL),     
+  ("Alice", "Johnson", 12, NULL),
+  ("Snow", "White", 12, NULL),
+  ("Reditharm", "Andles", 1, NULL),
+  ("Chris", "Evans", 5, NULL),
+  ("Samuel", "Lee", 7, NULL),
+  ("Laura", "Brown", 6, NULL),
+  ("Peter", "Parker", 10, NULL),
+  ("Bruce", "Wayne", 11, NULL),
+  ("Clark", "Kent", 8, NULL),
+  ("Diana", "Prince", 9, NULL),
+  ("Steve", "Rogers", 14, NULL),
+  ("Natasha", "Romanoff", 13, NULL),
+  ("Tony", "Stark", 16, NULL),
+  ("Pepper", "Potts", 15, NULL),
+  ("Wanda", "Maximoff", 3, NULL),
+  ("Vision", "Vision", 5, NULL),
+  ("Thor", "Odinson", 10, NULL),
+  ("Bruce", "Banner", 12, NULL),
+  ("Peter", "Quill", 6, NULL),
+  ("Gamora", "Gamora", 7, NULL),
+  ("Scott", "Lang", 17, NULL),
+  ("Hope", "Van Dyne", 17, NULL),
+  ("Stephen", "Strange", 8, NULL),
+  ("Bucky", "Barnes", 9, NULL),
+  ("T'Challa", "T'Challa", 2, NULL);  
 
