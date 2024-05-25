@@ -60,6 +60,52 @@ function mainAction() {
     });
 }
 
+// ---------------- EMPLOYEE -------------------- //
+
+// Fetch 'employee' table
+async function fetchEmployees() {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [rows] = await dbConnection.query('SELECT * FROM employee');
+        return rows;
+    } catch (error) {
+        console.error('Error fetching employees:', error);
+        return [];
+    } finally {
+        dbConnection.release();
+    }
+}
+
+// Function to display employees in a table
+function displayEmployeesTable(employeesData) {
+    const table = new Table({
+        head: ['ID', 'First Name', 'Last Name', 'Role ID', 'Manager ID'],
+        colWidths: [10, 20, 20, 15, 15]
+    });
+
+    employeesData.forEach(employee => {
+        table.push([employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
+    });
+
+    console.log('\x1b[34m' + table.toString() + '\x1b[0m'); // Output in blue color
+
+    mainAction();
+}
+
+// Add Employee
+async function addEmployee(firstName, lastName, roleId, managerId) {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [rows] = await dbConnection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, roleId, managerId]);
+        return rows;
+    } catch (error) {
+        console.error('Error adding employee:', error);
+        return [];
+    } finally {
+        dbConnection.release();
+    }
+}
+
 // ---------------- ROLE -------------------- //
 
 // Fetch 'role' table
@@ -104,7 +150,6 @@ function displayRolesTable(rolesData) {
 
     console.log('\x1b[34m' + table.toString() + '\x1b[0m'); // Output in blue color
 
-    mainAction();
 }
 
 // ---------------- DEPARTMENT -------------------- //
@@ -136,7 +181,6 @@ function displayDepartmentsTable(departmentData) {
 
     console.log('\x1b[34m' + table.toString() + '\x1b[0m'); // Output in blue color
 
-    mainAction(); // Call mainAction() to prompt the user for the next action
 }
 
 // Add Department
