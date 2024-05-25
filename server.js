@@ -3,7 +3,7 @@ const figlet = require('figlet');
 const Table = require('cli-table');
 const connection = require('./db/connection.js');
 
-figlet('Employee Database', function(err, data) {
+figlet('Employee Database', function (err, data) {
     if (err) {
         console.log('Error occurred while generating ASCII art.');
         console.dir(err);
@@ -13,56 +13,63 @@ figlet('Employee Database', function(err, data) {
     mainAction();
 });
 
-function mainAction() {
-    inquirer.prompt([
-        {
-            type: 'list',
-            choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department'],
-            message: 'What would you like to do?',
-            name: 'mainActionList'
-        }
-    ]).then(async (answers) => {
+async function mainAction() {
+    try {
+        const answers = await inquirer.prompt([
+            {
+                type: 'list',
+                choices: [
+                    'View All Employees',
+                    'Add Employee',
+                    'Update Employee Role',
+                    'View All Roles',
+                    'Add Role',
+                    'View All Departments',
+                    'Add Department'
+                ],
+                message: 'What would you like to do?',
+                name: 'mainActionList'
+            }
+        ]);
+
         switch (answers.mainActionList) {
             case 'View All Employees':
                 const employeesData = await fetchEmployees();
                 displayEmployeesTable(employeesData);
                 break;
             case 'Add Employee':
-                const newEmployeeData = await addEmployee();
-                displayEmployeesTable(newEmployeeData);
+                await handleAddEmployee();
                 break;
             case 'Update Employee Role':
-                const updatedEmployeeData = await updateRole();
-                displayEmployeesTable(updatedEmployeeData);
+                await handleUpdateRole();
                 break;
             case 'View All Roles':
                 const rolesData = await fetchRoles();
                 displayRolesTable(rolesData);
                 break;
             case 'Add Role':
-                const newRoleData = await addRole();
-                displayRolesTable(newRoleData);
+                await handleAddRole();
                 break;
             case 'View All Departments':
                 const departmentsData = await fetchDepartments();
                 displayDepartmentsTable(departmentsData);
                 break;
             case 'Add Department':
-                const newDepartmentName ='New Department Name';
-                const newDepartmentData = await addDepartment(newDepartmentName);
-                displayDepartmentsTable(newDepartmentData);
+                await handleAddDepartment();
                 break;
             default:
                 console.log('Invalid action selected.');
                 break;
         }
+    } catch (error) {
+        console.error('Error in main action:', error);
+    } finally {
         mainAction();
-    });
+    }
 }
 
 // ---------------- EMPLOYEE -------------------- //
 
-// Fetch 'employee' table
 async function fetchEmployees() {
     const dbConnection = await connection.getConnection();
     try {
@@ -76,7 +83,6 @@ async function fetchEmployees() {
     }
 }
 
-// Function to display employees in a table
 function displayEmployeesTable(employeesData) {
     const table = new Table({
         head: ['ID', 'First Name', 'Last Name', 'Role ID', 'Manager ID'],
@@ -87,20 +93,29 @@ function displayEmployeesTable(employeesData) {
         table.push([employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
     });
 
-    console.log('\x1b[34m' + table.toString() + '\x1b[0m'); // Output in blue color
-
-    mainAction();
+    console.log('\x1b[34m' + table.toString() + '\x1b[0m');
 }
 
-// Add Employee
+async function handleAddEmployee() {
+    const answers = await inquirer.prompt([
+        { type: 'input', name: 'firstName', message: 'First Name:' },
+        { type: 'input', name: 'lastName', message: 'Last Name:' },
+        { type: 'input', name: 'roleId', message: 'Role ID:' },
+        { type: 'input', name: 'managerId', message: 'Manager ID:' }
+    ]);
+
+    const { firstName, lastName, roleId, managerId } = answers;
+    await addEmployee(firstName, lastName, roleId, managerId);
+    const updatedEmployees = await fetchEmployees();
+    displayEmployeesTable(updatedEmployees);
+}
+
 async function addEmployee(firstName, lastName, roleId, managerId) {
     const dbConnection = await connection.getConnection();
     try {
-        const [rows] = await dbConnection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, roleId, managerId]);
-        return rows;
+        await dbConnection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, roleId, managerId]);
     } catch (error) {
         console.error('Error adding employee:', error);
-        return [];
     } finally {
         dbConnection.release();
     }
@@ -108,11 +123,10 @@ async function addEmployee(firstName, lastName, roleId, managerId) {
 
 // ---------------- ROLE -------------------- //
 
-// Fetch 'role' table
 async function fetchRoles() {
     const dbConnection = await connection.getConnection();
     try {
-        const [rows] = await dbConnection.query('SELECT * FROM role'); 
+        const [rows] = await dbConnection.query('SELECT * FROM role');
         return rows;
     } catch (error) {
         console.error('Error fetching roles:', error);
@@ -122,22 +136,6 @@ async function fetchRoles() {
     }
 }
 
-// Add Role
-async function addRole() {
-    const dbConnection = await connection.getConnection();
-    try {
-        // Update to 'role' table
-        const [rows] = await dbConnection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [title, salary, department_id]);
-        return rows;
-    } catch (error) {
-        console.error('Error fetching roles:', error);
-        return [];
-    } finally {
-        dbConnection.release();
-    }
-}
-
-// Display 'role' table
 function displayRolesTable(rolesData) {
     const table = new Table({
         head: ['ID', 'Title', 'Salary', 'Department'],
@@ -148,51 +146,109 @@ function displayRolesTable(rolesData) {
         table.push([role.id, role.title, role.salary, role.department_id]);
     });
 
-    console.log('\x1b[34m' + table.toString() + '\x1b[0m'); // Output in blue color
+    console.log('\x1b[34m' + table.toString() + '\x1b[0m');
+}
 
+async function handleAddRole() {
+    const answers = await inquirer.prompt([
+        { type: 'input', name: 'title', message: 'Role Title:' },
+        { type: 'input', name: 'salary', message: 'Salary:' },
+        { type: 'input', name: 'departmentId', message: 'Department ID:' }
+    ]);
+
+    const { title, salary, departmentId } = answers;
+    await addRole(title, salary, departmentId);
+    const updatedRoles = await fetchRoles();
+    displayRolesTable(updatedRoles);
+}
+
+async function addRole(title, salary, departmentId) {
+    const dbConnection = await connection.getConnection();
+    try {
+        await dbConnection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [title, salary, departmentId]);
+    } catch (error) {
+        console.error('Error adding role:', error);
+    } finally {
+        dbConnection.release();
+    }
 }
 
 // ---------------- DEPARTMENT -------------------- //
 
-// Fetch 'department' table
 async function fetchDepartments() {
     const dbConnection = await connection.getConnection();
     try {
-        const [rows] = await dbConnection.query('SELECT * FROM department'); // Fetch'department' table
+        const [rows] = await dbConnection.query('SELECT * FROM department');
         return rows;
     } catch (error) {
-        console.error('Error fetching department:', error);
+        console.error('Error fetching departments:', error);
         return [];
     } finally {
         dbConnection.release();
     }
 }
 
-// Display 'department' table
-function displayDepartmentsTable(departmentData) { 
+function displayDepartmentsTable(departmentData) {
     const table = new Table({
         head: ['ID', 'Department Name'],
-        colWidths: [10, 30] // Do I need to adjust the width?
+        colWidths: [10, 30]
     });
 
-   departmentData.forEach(department => {
+    departmentData.forEach(department => {
         table.push([department.id, department.name]);
     });
 
-    console.log('\x1b[34m' + table.toString() + '\x1b[0m'); // Output in blue color
-
+    console.log('\x1b[34m' + table.toString() + '\x1b[0m');
 }
 
-// Add Department
-async function addDepartment() {
+async function handleAddDepartment() {
+    const answers = await inquirer.prompt([
+        { type: 'input', name: 'departmentName', message: 'Department Name:' }
+    ]);
+
+    const { departmentName } = answers;
+    await addDepartment(departmentName);
+    const updatedDepartments = await fetchDepartments();
+    displayDepartmentsTable(updatedDepartments);
+}
+
+async function addDepartment(departmentName) {
     const dbConnection = await connection.getConnection();
     try {
-        // Add to 'department' table
-        const [rows] = await dbConnection.query('INSERT INTO department (name) VALUES (?)', [department_name]);
-        return rows;
+        await dbConnection.query('INSERT INTO department (name) VALUES (?)', [departmentName]);
     } catch (error) {
-        console.error('Error fetching departments:', error);
-        return [];
+        console.error('Error adding department:', error);
+    } finally {
+        dbConnection.release();
+    }
+}
+
+// ---------------- EMPLOYEE ROLE UPDATE -------------------- //
+
+async function handleUpdateRole() {
+    const employees = await fetchEmployees();
+    const roles = await fetchRoles();
+
+    const employeeChoices = employees.map(emp => ({ name: `${emp.first_name} ${emp.last_name}`, value: emp.id }));
+    const roleChoices = roles.map(role => ({ name: role.title, value: role.id }));
+
+    const answers = await inquirer.prompt([
+        { type: 'list', name: 'employeeId', message: 'Select an employee to update:', choices: employeeChoices },
+        { type: 'list', name: 'roleId', message: 'Select a new role:', choices: roleChoices }
+    ]);
+
+    const { employeeId, roleId } = answers;
+    await updateRole(employeeId, roleId);
+    const updatedEmployees = await fetchEmployees();
+    displayEmployeesTable(updatedEmployees);
+}
+
+async function updateRole(employeeId, roleId) {
+    const dbConnection = await connection.getConnection();
+    try {
+        await dbConnection.query('UPDATE employee SET role_id = ? WHERE id = ?', [roleId, employeeId]);
+    } catch (error) {
+        console.error('Error updating role:', error);
     } finally {
         dbConnection.release();
     }
