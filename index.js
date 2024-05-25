@@ -3,6 +3,8 @@ const figlet = require('figlet');
 const Table = require('cli-table');
 const connection = require('./db/connection.js');
 
+console.log(connection.getConnection)
+
 figlet('Employee Database', function (err, data) {
     if (err) {
         console.log('Error occurred while generating ASCII art.');
@@ -59,7 +61,6 @@ async function mainAction() {
                 break;
             default:
                 console.log('Invalid action selected.');
-                break;
         }
     } catch (error) {
         console.error('Error in main action:', error);
@@ -90,7 +91,13 @@ function displayEmployeesTable(employeesData) {
     });
 
     employeesData.forEach(employee => {
-        table.push([employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
+        const id = employee.id !== null ? employee.id : 'N/A';
+        const firstName = employee.first_name !== null ? employee.first_name : 'N/A';
+        const lastName = employee.last_name !== null ? employee.last_name : 'N/A';
+        const roleId = employee.role_id !== null ? employee.role_id : 'N/A';
+        const managerId = employee.manager_id !== null ? employee.manager_id : 'N/A';
+        
+        table.push([id, firstName, lastName, roleId, managerId]);
     });
 
     console.log('\x1b[34m' + table.toString() + '\x1b[0m');
@@ -104,7 +111,7 @@ async function handleAddEmployee() {
         { type: 'input', name: 'managerId', message: 'Manager ID:' }
     ]);
 
-    const { firstName, lastName, roleId, managerId } = answers;
+    const { firstName, lastName, roleId, roleTitle, managerId } = answers;
     await addEmployee(firstName, lastName, roleId, managerId);
     const updatedEmployees = await fetchEmployees();
     displayEmployeesTable(updatedEmployees);
@@ -143,7 +150,12 @@ function displayRolesTable(rolesData) {
     });
 
     rolesData.forEach(role => {
-        table.push([role.id, role.title, role.salary, role.department_id]);
+        const id = role.id !== null ? role.id : 'N/A';
+        const title = role.title !== null ? role.title : 'N/A';
+        const salary = role.salary !== null ? role.salary : 'N/A';
+        const departmentId = role.department_id !== null ? role.department_id : 'N/A';
+        
+        table.push([id, title, salary, departmentId]);
     });
 
     console.log('\x1b[34m' + table.toString() + '\x1b[0m');
@@ -195,7 +207,10 @@ function displayDepartmentsTable(departmentData) {
     });
 
     departmentData.forEach(department => {
-        table.push([department.id, department.name]);
+        const id = department.id !== null ? department.id : 'N/A';
+        const name = department.name !== null ? department.name : 'N/A';
+        
+        table.push([id, name]);
     });
 
     console.log('\x1b[34m' + table.toString() + '\x1b[0m');
