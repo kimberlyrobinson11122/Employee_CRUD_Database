@@ -1,5 +1,3 @@
-
-
 -- Drop the existing database if it exists (refreshes the entire database)
 DROP DATABASE IF EXISTS employee_db;
 
