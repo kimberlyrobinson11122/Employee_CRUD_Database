@@ -2,6 +2,7 @@ const inquirer = require("inquirer");
 const figlet = require("figlet");
 const Table = require("cli-table");
 const connection = require("./db/connection.js");
+require("console.table");
 
 console.log(connection.getConnection);
 
@@ -139,7 +140,7 @@ async function addEmployee(firstName, lastName, roleId, managerId) {
 async function fetchRoles() {
   const dbConnection = await connection.getConnection();
   try {
-    const [rows] = await dbConnection.query("SELECT * FROM role");
+    const [rows] = await dbConnection.query("SELECT role.id, role.title, role.salary, department.department_name AS department FROM role LEFT JOIN department ON role.department_id = department.id");
     return rows;
   } catch (error) {
     console.error("Error fetching roles:", error);
@@ -160,7 +161,7 @@ function displayRolesTable(rolesData) {
     const title = role.title !== null ? role.title : "N/A";
     const salary = role.salary !== null ? role.salary : "N/A";
     const departmentId =
-      role.department_id !== null ? role.department_id : "N/A";
+      role.department !== null ? role.department : "N/A";
 
     table.push([id, title, salary, departmentId]);
   });
@@ -185,7 +186,7 @@ async function addRole(title, salary, departmentId) {
   const dbConnection = await connection.getConnection();
   try {
     await dbConnection.query(
-      "INSERT INTO role (title, salary, department_name) VALUES (?, ?, ?)",
+      "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)",
       [title, salary, departmentId]
     );
   } catch (error) {
