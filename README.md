@@ -88,7 +88,7 @@ This is in a steady state until feature requests are submitted to the above emai
 ## Questions or Issues
 If you have any questions or encounter any issues, please don't hesitate to contact me through either of the following methods:
 
-[GitHub Profile](https://github.com/kimberlrobinson11122)
+[GitHub Profile](https://github.com/kimberlyrobinson11122)
 
 Email: me@me.com
 
