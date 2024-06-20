@@ -5,7 +5,7 @@
 ## Application
 Code not deployed on a public website, code available for copy on GitHub linked below and a video will be provided to show functionality.
 
-Example of link for Repo for Readme: (https://github.com/kimberlyrobinson11122/Employee_CRUD_Database)
+Link for GitHub Readme: [(https://github.com/kimberlyrobinson11122/Employee_CRUD_Database)](https://github.com/kimberlyrobinson11122/Employee_CRUD_Database/blob/main/README.md)
 
 ## Images
 
@@ -88,7 +88,7 @@ This is in a steady state until feature requests are submitted to the above emai
 ## Questions or Issues
 If you have any questions or encounter any issues, please don't hesitate to contact me through either of the following methods:
 
-[GitHub Profile](https://github.com/kimberlyrobinson11122)
+[GitHub Profile] (https://github.com/kimberlyrobinson11122)
 
 Email: me@me.com
 
