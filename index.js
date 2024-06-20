@@ -2,6 +2,7 @@ const inquirer = require("inquirer");
 const figlet = require("figlet");
 const Table = require("cli-table");
 const connection = require("./db/connection.js");
+const mysql = require('mysql2/promise');
 require("console.table");
 
 console.log(connection.getConnection);
@@ -18,57 +19,55 @@ figlet("Employee Database", function (err, data) {
 
 async function mainAction() {
   try {
-    const answers = await inquirer
-      .prompt([
-        {
-          type: "list",
-          choices: [
-            "View All Employees",
-            "Add Employee",
-            "Update Employee Role",
-            "View All Roles",
-            "Add Role",
-            "View All Departments",
-            "Add Department",
-          ],
-          message: "What would you like to do?",
-          name: "mainActionList",
-        },
-      ])
-      .then(async (answers) => {
-        switch (answers.mainActionList) {
-          case "View All Employees":
-            const employeesData = await fetchEmployees();
-            displayEmployeesTable(employeesData);
-            break;
-          case "Add Employee":
-            await handleAddEmployee();
-            break;
-          case "Update Employee Role":
-            await handleUpdateRole();
-            break;
-          case "View All Roles":
-            const rolesData = await fetchRoles();
-            displayRolesTable(rolesData);
-            break;
-          case "Add Role":
-            await handleAddRole();
-            break;
-          case "View All Departments":
-            const departmentsData = await fetchDepartments();
-            displayDepartmentsTable(departmentsData);
-            break;
-          case "Add Department":
-            await handleAddDepartment();
-            break;
-          default:
-            console.log("Invalid action selected.");
-        }
-      });
+    const answers = await inquirer.prompt([
+      {
+        type: "list",
+        choices: [
+          "View All Employees",
+          "Add Employee",
+          "Update Employee Role",
+          "View All Roles",
+          "Add Role",
+          "View All Departments",
+          "Add Department",
+        ],
+        message: "What would you like to do?",
+        name: "mainActionList",
+      },
+    ]);
+
+    switch (answers.mainActionList) {
+      case "View All Employees":
+        const employeesData = await fetchEmployees();
+        displayEmployeesTable(employeesData);
+        break;
+      case "Add Employee":
+        await handleAddEmployee();
+        break;
+      case "Update Employee Role":
+        await handleUpdateRole();
+        break;
+      case "View All Roles":
+        const rolesData = await fetchRoles();
+        displayRolesTable(rolesData);
+        break;
+      case "Add Role":
+        await handleAddRole();
+        break;
+      case "View All Departments":
+        const departmentsData = await fetchDepartments();
+        displayDepartmentsTable(departmentsData);
+        break;
+      case "Add Department":
+        await handleAddDepartment();
+        break;
+      default:
+        console.log("Invalid action selected.");
+    }
   } catch (error) {
     console.error("Error in main action:", error);
   } finally {
-    mainAction();
+    setTimeout(mainAction, 0); 
   }
 }
 
@@ -107,15 +106,65 @@ async function displayEmployeesTable(employeesData) {
   console.log('\x1b[34m' + table.toString() + '\x1b[0m');
 }
 
+async function fetchManagers() {
+  const dbConnection = await connection.getConnection();
+  try {
+    const [rows] = await dbConnection.query(`
+      SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name, ' - ', role.title) AS manager_name
+      FROM employee
+      LEFT JOIN role ON employee.role_id = role.id
+      WHERE employee.id IN (
+        SELECT DISTINCT manager_id FROM employee WHERE manager_id IS NOT NULL
+      )
+    `);
+    return rows;
+  } catch (error) {
+    console.error("Error fetching managers:", error);
+    return [];
+  } finally {
+    dbConnection.release();
+  }
+}
+
+async function fetchRoles() {
+  const dbConnection = await connection.getConnection();
+  try {
+    const [rows] = await dbConnection.query(`
+      SELECT role.id, role.title, role.salary, department.department_name AS department
+      FROM role
+      LEFT JOIN department ON role.department_id = department.id
+    `);
+    return rows;
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+    return [];
+  } finally {
+    dbConnection.release();
+  }
+}
+
 async function handleAddEmployee() {
+  const managers = await fetchManagers();
+  const roles = await fetchRoles(); // Ensure this fetches the roles
+
+  const managerChoices = managers.map((manager) => ({
+    name: manager.manager_name,
+    value: manager.id
+  }));
+
+  const roleChoices = roles.map((role) => ({
+    name: role.title,
+    value: role.id,
+  }));
+
   const answers = await inquirer.prompt([
     { type: "input", name: "firstName", message: "First Name:" },
     { type: "input", name: "lastName", message: "Last Name:" },
-    { type: "input", name: "roleId", message: "Role ID:" },
-    { type: "input", name: "managerId", message: "Manager ID:" },
+    { type: "list", name: "roleId", message: "Select Role:", choices: roleChoices },
+    { type: "list", name: "managerId", message: "Select Manager:", choices: managerChoices }
   ]);
 
-  const { firstName, lastName, roleId, roleTitle, managerId } = answers;
+  const { firstName, lastName, roleId, managerId } = answers;
   await addEmployee(firstName, lastName, roleId, managerId);
   const updatedEmployees = await fetchEmployees();
   displayEmployeesTable(updatedEmployees);
@@ -128,6 +177,8 @@ async function addEmployee(firstName, lastName, roleId, managerId) {
       "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
       [firstName, lastName, roleId, managerId]
     );
+
+    console.log("Employee added successfully.");
   } catch (error) {
     console.error("Error adding employee:", error);
   } finally {
@@ -137,18 +188,6 @@ async function addEmployee(firstName, lastName, roleId, managerId) {
 
 // ---------------- ROLE -------------------- //
 
-async function fetchRoles() {
-  const dbConnection = await connection.getConnection();
-  try {
-    const [rows] = await dbConnection.query("SELECT role.id, role.title, role.salary, department.department_name AS department FROM role LEFT JOIN department ON role.department_id = department.id");
-    return rows;
-  } catch (error) {
-    console.error("Error fetching roles:", error);
-    return [];
-  } finally {
-    dbConnection.release();
-  }
-}
 
 function displayRolesTable(rolesData) {
   const table = new Table({
@@ -160,20 +199,26 @@ function displayRolesTable(rolesData) {
     const id = role.id !== null ? role.id : "N/A";
     const title = role.title !== null ? role.title : "N/A";
     const salary = role.salary !== null ? role.salary : "N/A";
-    const departmentId =
-      role.department !== null ? role.department : "N/A";
+    const department = role.department !== null ? role.department : "N/A";
 
-    table.push([id, title, salary, departmentId]);
+    table.push([id, title, salary, department]);
   });
 
   console.log("\x1b[34m" + table.toString() + "\x1b[0m");
 }
 
 async function handleAddRole() {
+  const departments = await fetchDepartments();
+  
+  const departmentChoices = departments.map((dept) => ({
+    name: dept.department_name,
+    value: dept.id
+  }));
+  
   const answers = await inquirer.prompt([
     { type: "input", name: "title", message: "Role Title:" },
     { type: "input", name: "salary", message: "Salary:" },
-    { type: "input", name: "departmentId", message: "Department ID:" },
+    { type: "list", name: "departmentId", message: "Select Department:", choices: departmentChoices }
   ]);
 
   const { title, salary, departmentId } = answers;
@@ -186,6 +231,7 @@ async function addRole(title, salary, departmentId) {
   const dbConnection = await connection.getConnection();
   try {
     await dbConnection.query(
+      //map over department name, show choices
       "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)",
       [title, salary, departmentId]
     );
@@ -195,6 +241,7 @@ async function addRole(title, salary, departmentId) {
     dbConnection.release();
   }
 }
+
 
 // ---------------- DEPARTMENT -------------------- //
 
@@ -262,6 +309,7 @@ async function handleUpdateRole() {
     name: `${emp.first_name} ${emp.last_name}`,
     value: emp.id,
   }));
+
   const roleChoices = roles.map((role) => ({
     name: role.title,
     value: role.id,
